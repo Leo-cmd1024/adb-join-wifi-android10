@@ -182,8 +182,12 @@ public class MainActivity extends AppCompatActivity implements CheckSSIDBroadcas
             if (WPA_PASSWORD.equals(passwordType)) {
                 builder.setWpa2Passphrase(password);
             } else if (WEP_PASSWORD.equals(passwordType)) {
-                builder.setWepKeys(new String[]{ password });
+                // WifiNetworkSuggestion has no WEP setter; WEP is unsupported via
+                // suggestions on API 29+. Legacy WEP path still works on API < 29.
+                Log.w(TAG, "WEP is not supported via WifiNetworkSuggestion on Android 10+");
+                Toast.makeText(this, "WEP unsupported on Android 10+", Toast.LENGTH_SHORT).show();
             }
+            // OPEN (password == null) requires no passphrase setter.
         }
 
         List<WifiNetworkSuggestion> suggestions = new ArrayList<>();

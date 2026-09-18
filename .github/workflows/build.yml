@@ -66,24 +66,29 @@ jobs:
               -d "{\"body\":\"PUBLISH_STATUS: $MSG\"}" || true
             exit 0
           fi
-          cp "$APK" apk/adbjoinwifi_android10.apk
+          cp -f "$APK" apk/adbjoinwifi_android10.apk
           git config user.email "action@github.com"
           git config user.name "github-actions"
-          git add apk/adbjoinwifi_android10.apk
-          if git diff --cached --quiet; then
-            MSG="APK_UNCHANGED_SKIP"
+          echo "--- check-ignore ---"
+          git check-ignore -v apk/adbjoinwifi_android10.apk || echo "NOT_IGNORED"
+          echo "--- git status before add ---"
+          git status --short
+          git add -f apk/adbjoinwifi_android10.apk
+          echo "--- git status after add -f ---"
+          git status --short
+          echo "--- committing ---"
+          git commit -m "ci: publish built APK [skip ci]" 2>commit_err.txt
+          CRC=$?
+          echo "commit_rc=$CRC $(head -c 400 commit_err.txt | tr '\n' ' ')"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/main 2>push_err.txt
+          RC=$?
+          if [ $RC -eq 0 ]; then
+            MSG="PUSH_OK"
           else
-            git commit -m "ci: publish built APK [skip ci]"
-            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/main 2>push_err.txt
-            RC=$?
-            if [ $RC -eq 0 ]; then
-              MSG="PUSH_OK"
-            else
-              MSG="PUSH_FAIL rc=$RC err=$(head -c 800 push_err.txt | tr '\n' ' ')"
-            fi
+            MSG="PUSH_FAIL rc=$RC err=$(head -c 800 push_err.txt | tr '\n' ' ')"
           fi
           echo "RESULT: $MSG"
           curl -sS -X POST -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/$(git rev-parse HEAD)/comments" \
-            -d "{\"body\":\"PUBLISH_STATUS: $MSG\"}" || true
+            -d "{\"body\":\"PUBLISH_STATUS: $MSG | commit_rc=$CRC\"}" || true
           exit 0

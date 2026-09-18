@@ -25,6 +25,13 @@ android {
     }
 }
 
+// Kotlin 1.8+ merged jdk7/jdk8 into kotlin-stdlib; drop the legacy shim artifacts
+// (pulled transitively by androidx) to avoid duplicate-class conflicts.
+configurations.all {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.core:core:1.13.1'

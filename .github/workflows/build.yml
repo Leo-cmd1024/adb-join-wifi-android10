@@ -5,6 +5,9 @@ on:
     branches: ["**"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -46,3 +49,21 @@ jobs:
         with:
           name: adbjoinwifi-android10-debug
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Publish APK to repo (raw fetchable)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          mkdir -p apk
+          cp app/build/outputs/apk/debug/*.apk apk/adbjoinwifi_android10.apk
+          git config user.email "action@github.com"
+          git config user.name "github-actions"
+          git add apk/adbjoinwifi_android10.apk
+          if git diff --cached --quiet; then
+            echo "APK unchanged, skip commit"
+          else
+            git commit -m "ci: publish built APK [skip ci]"
+            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+            echo "APK published to repo"
+          fi

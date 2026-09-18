@@ -27,6 +27,7 @@
 
         <receiver
             android:name=".AdminReceiver"
+            android:exported="true"
             android:label="@string/device_admin"
             android:description="@string/device_admin"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
